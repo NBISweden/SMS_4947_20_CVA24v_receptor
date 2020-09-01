@@ -1,0 +1,102 @@
+GraphBuildTime	0.0224h wall, 0.0043h user + 0.0002h system = 0.0045h CPU (20.18%)
+GraphMergeTime	0.0000h wall, 0.0000h user + 0.0000h system = 0.0000h CPU (69.35%)
+disjointSubgraphs	2
+nodes	4
+directedEdges	5
+selfEdges	1
+totalGraphEvidence	186
+totalCleaned	576
+highestSearchCount	15
+isMaxSearchCount	0
+highestSearchDensity	0.0375
+isMaxSearchDensity	0
+
+[Sample0]
+Source	/crex/proj/snic2020-16-70/nobackup/private/SMS_4947_20_CVA24v_receptor/scratch/bam/SJ-2370-HAP1-WT_18_29.06_29.13.bam
+MinMapqFiltered	33	0.0020
+NotFiltered	16404	0.9980
+NotFilteredAndIgnored	16285	0.9908
+NotFilteredAndAnomalousPair	114	0.0069
+NotFilteredAndAnomalousPairRemotes	104	0.0063
+NotFilteredAndSplitRead	2	0.0001
+NotFilteredAndLargeIndel	0	0.0000
+NotFilteredAndSemiAligned	7	0.0004
+EvidenceType_pair	0	0.0000
+EvidenceType_local_pair	104	0.9204
+EvidenceType_cigar	0	0.0000
+EvidenceType_softclip	0	0.0000
+EvidenceType_semialign	7	0.0619
+EvidenceType_shadow	0	0.0000
+EvidenceType_split_align	2	0.0177
+EvidenceType_unknown	0	0.0000
+ClosePairs	0
+
+[Sample1]
+Source	/crex/proj/snic2020-16-70/nobackup/private/SMS_4947_20_CVA24v_receptor/scratch/bam/SJ-2370-HAP1-DSG-F9_18_29.06_29.13.bam
+MinMapqFiltered	19	0.0011
+NotFiltered	16990	0.9989
+NotFilteredAndIgnored	16846	0.9904
+NotFilteredAndAnomalousPair	126	0.0074
+NotFilteredAndAnomalousPairRemotes	69	0.0041
+NotFilteredAndSplitRead	26	0.0015
+NotFilteredAndLargeIndel	11	0.0006
+NotFilteredAndSemiAligned	5	0.0003
+EvidenceType_pair	0	0.0000
+EvidenceType_local_pair	106	0.7211
+EvidenceType_cigar	11	0.0748
+EvidenceType_softclip	0	0.0000
+EvidenceType_semialign	5	0.0340
+EvidenceType_shadow	0	0.0000
+EvidenceType_split_align	25	0.1701
+EvidenceType_unknown	0	0.0000
+ClosePairs	9
+
+NodeRegionSizequantile:
+0.25	40
+0.5	40
+0.75	529
+0.9	556
+0.95	556
+0.99	556
+NodeEdgeCount:
+0	0
+1	3
+2	1
+3	0
+4	0
+5	0
+6	0
+7	0
+8	0
+9+	0
+NodeObservationCount:
+0	1
+1	0
+2	0
+3	0
+4	0
+5	0
+6	0
+7	0
+8	0
+9	0
+10	0
+11	0
+12	1
+13	0
+14	0
+15	0
+16	0
+17	0
+18	0
+19	0
+20	0
+21	0
+22	0
+23	0
+24	0
+25	0
+26	0
+27	0
+28	0
+29+	2

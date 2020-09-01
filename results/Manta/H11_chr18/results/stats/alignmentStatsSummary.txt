@@ -1,0 +1,26 @@
+group:	/crex/proj/snic2020-16-70/nobackup/private/SMS_4947_20_CVA24v_receptor/scratch/bam/SJ-2370-HAP1-WT_18_29.06_29.13.bam
+fragment length observations:	7496
+fragment length quantiles:
+0.01	194
+0.05	265
+0.1	297
+0.25	348
+0.5	405
+0.75	471
+0.9	535
+0.95	576
+0.99	664
+
+group:	/crex/proj/snic2020-16-70/nobackup/private/SMS_4947_20_CVA24v_receptor/scratch/bam/SJ-2370-HAP1-DSG-H11_18_29.06_29.13.bam
+fragment length observations:	10064
+fragment length quantiles:
+0.01	179
+0.05	247
+0.1	278
+0.25	323
+0.5	373
+0.75	430
+0.9	490
+0.95	527
+0.99	604
+
