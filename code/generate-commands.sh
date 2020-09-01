@@ -1,0 +1,312 @@
+#!/usr/bash
+###################################################################
+#0. Resources                                             #
+###################################################################
+#ANNOTATIONS=($PROJECT_DIR'data/meta/annotation/Human_annotation.bed' $PROJECT_DIR'data/meta/annotation/Mouse_annotation.bed')
+PROJECT_ID='snic2020-15-100'
+PROJECT_DIR='/proj/snic2020-16-70/private/SMS_4947_20_CVA24v_receptor/'
+CODE=$PROJECT_DIR'code/'
+#SAMPLES=$CODE'Samples_recal_gvcf.txt'
+SAMPLES=$CODE'Samples_read.txt'
+INTERMEDIATE_DIR=$PROJECT_DIR'intermediate/'
+BWA=$INTERMEDIATE_DIR'BWA/'
+BWA_QC=$INTERMEDIATE_DIR'BWA_QC/'
+RESULTS_DIR=$PROJECT_DIR'results'
+RAW_READS=''
+GENOME=$PROJECT_DIR'data/meta_data/reference/human_g1k_v37.fasta'
+GTF=$PROJECT_DIR'data/meta_data/annotation/GRCh37-70.genes.gtf'
+INTERVAL=$PROJECT_DIR'data/meta_data/reference/intervals.list'
+VCF=$PROJECT_DIR'data/meta_data/variation/00-All.vcf'
+VARIANT_CALLING=$INTERMEDIATE_DIR'Variant_calling/'
+GENOTYPING=$VARIANT_CALLING'Genotyping'
+THREADS=20
+mkdir $VARIANT_CALLING $GENOTYPING $BWA_QC
+
+SBATCH="#!/bin/bash -l
+#SBATCH -A $PROJECT_ID
+#SBATCH --mail-type=all
+#SBATCH --mail-user=nimarafati@gmail.com"
+
+
+
+
+
+rm -f run_QC.sh
+while read -r sample R1 R2
+do
+        echo "$SBATCH
+#SBATCH -p node -n 1
+#SBATCH -t 5:00:00
+#SBATCH -M Snowy
+cd $BWA/${sample}
+module load bioinfo-tools QualiMap
+#samtools stats ${sample}.sort.MarkDup.recal.bam >${sample}.sort.MarkDup.recal.bam.stats &
+qualimap \
+bamqc \
+-bam ${sample}.sort.MarkDup.recal.bam \
+--paint-chromosome-limits \
+--genome-gc-distr HUMAN \
+-gff $GTF \
+-nt $THREADS \
+-skip-duplicated \
+--skip-dup-mode 0 \
+-outdir $BWA_QC/${sample}_QC \
+-outformat HTML &
+wait" >Sbatch_QC_${sample}.script
+echo "sbatch Sbatch_QC_${sample}.script" >>run_QC.sh
+done<$SAMPLES
+
+###################################################################
+#1. VariantCalling                                             	  #
+###################################################################
+
+
+#rm -f run_GenotypeGVCFs.sh
+#while read interval
+#do
+#        echo "$SBATCH
+##SBATCH -p node
+##SBATCH -t 24:00:00
+##SBATCH -J GT_$interval
+#cd $VARIANT_CALLING
+#
+#java -jar /sw/apps/bioinfo/GATK/3.7/GenomeAnalysisTK.jar -T GenotypeGVCFs -R $GENOME \\" >Sbatch_GenotypeGVCFs_$interval.script
+#        while read -r line b c d 
+#        do
+#                echo -n "--variant $line \\">>Sbatch_GenotypeGVCFs_$interval.script
+#        done<$SAMPLES
+#	echo "-o GT-${interval}.vcf -L $PROJECT_DIR/data/meta_data/reference/${interval}.list -nt $THREADS " >>Sbatch_GenotypeGVCFs_$interval.script
+#echo "sbatch Sbatch_GenotypeGVCFs_$interval.script" >>run_GenotypeGVCFs.sh
+#done<$INTERVAL
+
+rm -f run_GVCF.sh
+while read -r sample R1 R2
+do
+	echo "$SBATCH
+#SBATCH -p core -n 10
+#SBATCH -t 5-00:00:00
+#SBATCH -J ${sample}_GVCF
+module load bioinfo-tools GATK/4.1.0.0 samtools
+mkdir -p $INTERMEDIATE_DIR/Variant_calling/${sample}
+cd \$SNIC_TMP
+cp $BWA/${sample}/${sample}.sort.MarkDup.recal.ba* \$SNIC_TMP
+gatk --java-options \"-Xmx100g -Xms6000m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10\" \
+HaplotypeCaller \
+-R $GENOME \
+-I ${sample}.sort.MarkDup.recal.bam \
+-L $INTERVAL \
+-D $VCF \
+-O ${sample}.g.vcf \
+-ERC GVCF
+cp ${sample}.g.vcf $INTERMEDIATE_DIR/Variant_calling/${sample}
+gatk IndexFeatureFile -F $INTERMEDIATE_DIR/Variant_calling/${sample}/${sample}.g.vcf " >Sbatch_GVCF_${sample}.script
+echo "sbatch Sbatch_GVCF_${sample}.script" >>run_GVCF.sh
+done<$SAMPLES
+
+
+
+echo "$SBATCH
+#SBATCH -p core -n 2
+#SBATCH -t 4-00:00:00
+#SBATCH -J Genomics_DB
+module load bioinfo-tools GATK/4.1.0.0 samtools
+
+gatk GenomicsDBImport \\" >Sbatch_GenomicsDB.script
+while read -r sample R1 R2
+do
+	echo "-V $INTERMEDIATE_DIR/Variant_calling/${sample}/${sample}.g.vcf \\">>Sbatch_GenomicsDB.script
+done<$SAMPLES
+
+while read -r chr size
+do
+	CHR=$CHR"-L $chr " 
+done<${GENOME}.fai
+#CHR=$(echo $CHR | sed 's/\\$//')
+echo "$CHR \\" >>Sbatch_GenomicsDB.script 
+echo "--genomicsdb-workspace-path $VARIANT_CALLING/Genomics_DB
+sbatch Sbatch_Genotyping.script" >>Sbatch_GenomicsDB.script
+
+##Genotyping
+
+echo "$SBATCH
+#SBATCH -p core -n 2
+#SBATCH -t 4-00:00:00
+#SBATCH -J Genotyping
+module load bioinfo-tools GATK/4.1.0.0 samtools
+cd $CODE
+ln -s $VARIANT_CALLING/Genomics_DB
+gatk GenotypeGVCFs -R $GENOME -V gendb://Genomics_DB -O $GENOTYPING/Raw_Call.vcf -G StandardAnnotation --new-qual 
+sbatch Sbatch_Extracting_SNP_INDEL_and_stats.script" >Sbatch_Genotyping.script
+
+#Extracting SNP/INDELs
+#GENOTYPING='/proj/snic2020-16-70/private/SMS_4947_20_CVA24v_receptor/intermediate/snpEff/'
+echo "$SBATCH
+#SBATCH -p core -n 2
+#SBATCH -t 10:00:00
+#SBATCH -J SNP_INDEL
+module load bioinfo-tools GATK/4.1.0.0 
+cd $GENOTYPING
+gatk SelectVariants -R $GENOME -V Raw_Call.vcf --select-type-to-include SNP --restrict-alleles-to BIALLELIC -O Raw_Call-SNP.vcf &
+gatk SelectVariants -R $GENOME -V Raw_Call.vcf --select-type-to-include INDEL --restrict-alleles-to BIALLELIC -O Raw_Call-INDEL.vcf &
+wait
+
+#Filtering:
+#First list the stats generated by GATK
+grep -v \"\#\" Raw_Call.vcf | cut -f8 | sed 's/;/\n/g' | sed 's/=.*//' | sort -k1,1 -u >$CODE/criteria.list
+echo \"QUAL\" >>$CODE/criteria.list
+#Extract the stats from vcf file to generate plots to chose ranges for filtering " >Sbatch_Extracting_SNP_INDELs.script
+
+##Stats
+echo "$SBATCH
+#SBATCH -p core -n 2
+#SBATCH -t 10:00:00
+#SBATCH -J SNP_INDEL
+
+####SNP
+while read -r stats
+do
+	cmd=\"\$cmd -F \$stats\" 
+done<$CODE/criteria.list
+cmd=\"gatk VariantsToTable -V Raw_Call-SNP.vcf -F CHROM -F POS -F QUAL   -O Raw_Call-SNP_stats.txt -GF DP -GF GQ \$cmd \"
+\$cmd
+
+####INDEL
+cmd=\"\"
+while read -r stats
+do
+        cmd=\"\$cmd -F \$stats\"
+done<$CODE/criteria.list
+cmd=\"gatk VariantsToTable -V Raw_Call-INDEL.vcf -F CHROM -F POS -F QUAL   -O Raw_Call-INDEL_stats.txt -GF DP -GF GQ \$cmd \"
+\$cmd " >Sbatch_stats.script
+## 
+
+##Visualise the distributions
+###SNP
+while read line
+do
+
+echo "echo \"
+setwd(\\\"$GENOTYPING\\\")
+data <- read.table(\\\"Raw_Call-SNP_stats.txt\\\", header = T)
+pdf(\\\"Raw_call-SNP-$line.pdf\\\",width=10,height=7)
+hist(data[,'$line'],breaks=100,col=\\\"blue\\\",main=\\\"$line\\\")
+dev.off()
+pdf(\\\"Raw_call-SNP-$line-3-sd.pdf\\\",width=10,height=7)
+sd=sd(data[,'$line'],na.rm=T)
+min=mean(data[,'$line'],na.rm=T)-3*sd
+max=mean(data[,'$line'],na.rm=T)+3*sd
+hist(data[,'$line'],breaks=300, col=\\\"blue\\\", main=\\\"$line\\\", xlim=c(min, max))
+dev.off()
+pdf(\\\"Raw_call-SNP-$line-2-sd.pdf\\\",width=10,height=7)
+sd=sd(data[,'$line'],na.rm=T)
+min=mean(data[,'$line'],na.rm=T)-2*sd
+max=mean(data[,'$line'],na.rm=T)+2*sd
+hist(data[,'$line'],breaks=300, col=\\\"blue\\\", main=\\\"$line\\\", xlim=c(min, max))
+dev.off()
+\" >$CODE/${line}.Rscript 
+R --vanilla -q < $CODE/${line}.Rscript >$CODE/$line.log " >>Sbatch_Extracting_SNP_INDEL_and_stats.script
+done<$CODE/criteria.list
+
+###INDEL
+while read line
+do
+
+echo "echo \"
+setwd(\\\"$GENOTYPING\\\")
+data <- read.table(\\\"Raw_Call-INDEL_stats.txt\\\", header = T)
+pdf(\\\"Raw_call-INDEL-$line.pdf\\\",width=10,height=7)
+hist(data[,'$line'],breaks=100,col=\\\"blue\\\",main=\\\"$line\\\")
+dev.off()
+pdf(\\\"Raw_call-INDEL-$line-3-sd.pdf\\\",width=10,height=7)
+sd=sd(data[,'$line'],na.rm=T)
+min=mean(data[,'$line'],na.rm=T)-3*sd
+max=mean(data[,'$line'],na.rm=T)+3*sd
+hist(data[,'$line'],breaks=300, col=\\\"blue\\\", main=\\\"$line\\\", xlim=c(min, max))
+dev.off()
+pdf(\\\"Raw_call-INDEL-$line-2-sd.pdf\\\",width=10,height=7)
+sd=sd(data[,'$line'],na.rm=T)
+min=mean(data[,'$line'],na.rm=T)-2*sd
+max=mean(data[,'$line'],na.rm=T)+2*sd
+hist(data[,'$line'],breaks=300, col=\\\"blue\\\", main=\\\"$line\\\", xlim=c(min, max))
+dev.off()
+\" >$CODE/${line}.Rscript 
+R --vanilla -q < $CODE/${line}.Rscript >$CODE/$line.log " >>Sbatch_Extracting_SNP_INDEL_and_stats.script
+done<$CODE/criteria.list
+
+##Now filtering based on stats
+echo "$SBATCH
+#SBATCH -p core -n 2
+#SBATCH -t 24:00:00
+#SBATCH -J Filter_and_merge
+module load bioinfo-tools GATK/4.1.0.0
+cd $GENOTYPING/
+
+#INDEL
+gatk VariantFiltration \
+-R $GENOME \
+--variant Raw_Call-INDEL.vcf \
+-O Raw_Call-INDEL-FILTER.vcf \
+-filter \"QUAL < 100.0 \" --filter-name \"QUAL100\" \
+-filter \"QD < 10.0\" --filter-name \"QD10\" \
+-filter \"FS > 10.0\" --filter-name \"FS10\" \
+-filter \"ReadPosRankSum < -2.0\" --filter-name \"ReadPosRankSum-2\" \
+-filter \"MQRankSum  < -2.0 \" --filter-name \"MQRankSum-2\" \
+-filter \"BaseQRankSum < -5.0\" --filter-name \"BaseQRankSum-5\" \
+-filter \"SOR > 3.0\" --filter-name \"SOR3\" 
+--genotype-filter-name \"DPFilter\" --genotype-filter-expression  \"DP < 10.0 || DP >200.0\" &
+
+#SNP
+gatk VariantFiltration \
+-R $GENOME \
+--variant Raw_Call-SNP.vcf \
+-O Raw_Call-SNP-FILTER.vcf \
+-filter \"QUAL < 100.0 \" --filter-name \"QUAL100\" \
+-filter \"QD < 10.0\" --filter-name \"QD10\" \
+-filter \"FS > 10.0\" --filter-name \"FS10\" \
+-filter \"MQ < 40.0 \" --filter-name \"MQ40\" \
+-filter \"MQRankSum  < -8.0 \" --filter-name \"MQRankSum-8\" \
+-filter \"ReadPosRankSum < -5.0\" --filter-name \"ReadPosRankSum-5\" \
+-filter \"BaseQRankSum < -5.0\" --filter-name \"BaseQRankSum-5\" \
+-filter \"SOR > 3.0\" --filter-name \"SOR-3\" \
+--genotype-filter-name \"DPFilter\" --genotype-filter-expression  \"DP < 10.0 || DP >400.0\" &
+wait 
+
+module load vcftools
+bgzip Raw_Call-INDEL-FILTER.vcf & 
+bgzip Raw_Call-SNP-FILTER.vcf &
+wait
+tabix -p vcf Raw_Call-INDEL-FILTER.vcf.gz &
+tabix -p vcf Raw_Call-SNP-FILTER.vcf.gz &
+wait
+
+#Merge vcf files
+java -jar /sw/apps/bioinfo/picard/2.20.4/rackham/picard.jar SortVcf I=Raw_Call-SNP-FILTER.vcf I=Raw_Call-INDEL-FILTER.vcf O=Raw_Call-FILTER.sort.vcf
+
+#Extract only PASS variants
+fgrep '#' Raw_Call-FILTER.sort.vcf >Final_Call-PASS.vcf
+awk '(\$7==\"PASS\")' Raw_Call-FILTER.sort.vcf >>Final_Call-PASS.vcf 
+">Sbatch_Filtering.script
+
+#snpEff
+echo "$SBATCH
+#SBATCH -p core -n 1
+#SBATCH -t 48:00:00
+#SBATCH -J snpEff
+module load bioinfo-tools GATK/4.1.0.0
+cd $GENOTYPING
+
+java -jar /sw/bioinfo/snpEff/4.3t/rackham/snpEff.jar GRCh37.p13.RefSeq -csvStats Final_Call-PASS.csv -canon -nodownload -v Final_Call-PASS.vcf > Final_Call-PASS_snpEff.vcf
+#Extract genotypes 
+module load bioinfo-tools vcftools
+vcftools --vcf Final_Call-PASS_snpEff.vcf --012 --out Final_Call-PASS_snpEff
+
+#Create bed file from genotypes
+bash ~/private/Pipelines/transpose-matrix.sh Final_Call-PASS_snpEff.012
+
+#Extract fixed positions 
+awk '(\$4  == 2  && \$5 == 0 || \$4 == 0 && \$5 == 2)' Final_Call-PASS_snpEff.012.t.bed >Final_Call-PASS_snpEff_fixed_positions.012.t.bed
+
+#Intersect fixed position with Final VCF files with snpEff annotation
+module load bioinfo-tools BEDTools
+intersectBed -wa -a Final_Call-PASS_snpEff.vcf -b Final_Call-PASS_snpEff_fixed_positions.012.t.bed >>Final_Call-PASS_snpEff_fixed_positions.vcf
+" >Sbatch_snpEff.script
