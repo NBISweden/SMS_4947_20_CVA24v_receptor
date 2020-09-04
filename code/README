@@ -1,0 +1,4 @@
+In this directory you find codes used to analyse the data. 
+generate-commands.sh is the script used to generate all commands to run on Uppmax.
+SMS_4947_20_CVA24v_receptor.Rmd includes scripts used to parse the resutls.
+
