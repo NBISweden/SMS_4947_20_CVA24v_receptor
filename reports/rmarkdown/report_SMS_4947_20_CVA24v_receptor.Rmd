@@ -1,0 +1,387 @@
+---
+title: "`r params$project_title`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: \usepackage{fancyhdr} \usepackage{graphicx} \usepackage{eurosym}
+  \pagestyle{fancy} \addtolength{\headheight}{1.0cm} \fancypagestyle{plain}{\pagestyle{fancy}}
+  \lhead{\includegraphics[height=1.1cm, width=2.96cm]{../common/logos/nbis-logo.pdf}}
+  \rhead{\includegraphics[height=1.3cm, width=4cm]{../common/logos/scilifelab-logo.jpg}}
+  \usepackage{float}
+output:
+  pdf_document:
+    fig_caption: yes
+    number_sections: yes
+  html_document:
+    df_print: paged
+params:
+  estimated_time: 60 h
+  organisation: Umea University
+  pi_mail: niklas.rnberg@umu.se
+  pi_name: Niklas Arnberg
+  project_title: CVA24v and receptors
+  redmine_issue: 4947
+  requester_mail: nitesh.mistry@umu.se
+  requester_name: Nitesh Mistry
+  staff_mail: nima.rafati@nbis.se
+  staff_name: Nima Rafati
+  staff_web: https://nbis.se/about/staff/nima-rafati/
+  uppmax_project: snic2020-15-10(computational)&snic2020-16-70(storage)
+  used_time: 57 h
+bibliography: ../common/my_references.bib
+urlcolor: blue
+---
+\vspace{0.5in}
+\begin{center}
+  \begin{tabular}{l r}
+    Redmine issue: & `r params$redmine_issue` \\
+    NBIS staff: & `r params$staff_name` (`r params$staff_mail`) \\
+    Principal investigator: & `r params$pi_name`(`r params$pi_mail`) \\
+    Request by: & `r params$requester_name`(`r params$requester_mail`) \\
+    Organisation: & `r params$organisation` \\
+    Estimated time: & `r params$estimated_time`   \\
+    Used time: & `r params$used_time`   
+  
+  \end{tabular}
+\end{center}
+\newpage
+\tableofcontents 
+```{r setup, include=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(knitr, captioner, bundesligR, stringr)
+library(knitr)
+knitr::opts_chunk$set(
+    echo       = TRUE,
+    size       = "small", 
+    warning    = FALSE, 
+    message    = FALSE,
+    error      = TRUE, 
+    fig.path   = "../figures",
+    cache      = TRUE, 
+    cache.path = "../../scratch/cache/")
+
+```
+
+```{r Report variables, echo = FALSE}
+affil <- paste("National Bioinformatics Infrastructure Sweden, Science for",
+    "Life Laboratory, Stockholm University")
+link_support <- "http://nbis.se/support/support.html"
+link_uppmax <- paste("http://uppmax.uu.se/support-sv/faq/general-",
+    "miscellaneous-faq/acknowledging-uppmax--snic--and-uppnex")
+link_authorship <- "http://www.icmje.org/recommendations/"
+link_agreement <- "http://nbis.se/assets/doc/nbis-support-useragreement.pdf"
+link_acknowledge <- paste("https://ngisweden.scilifelab.se/info/faq#how-do",
+                          "-i-acknowledge-ngi-in-my-publication")
+link_sensitive_data <- "https://nbis.se/support/human-data.html"
+```
+
+```{r creating_lable_counter, echo = F}
+table_captions <- captioner::captioner(prefix="")
+figure_captions <- captioner::captioner(prefix="")
+
+t.ref <- function(label){
+  stringr::str_extract(table_captions(label), "[:]*")#, "[^:]*")
+}
+
+f.ref <- function(label){
+  stringr::str_extract(figure_captions(label), "[:]*") #, "[^:]*")
+}
+```
+
+\newpage
+
+
+# Work log
+
+* **2020-03** Consultation
+* **2020-05** Meeting and discussion on variant calls and ploidy of the samples
+* **2020-06** Meeting and discussion on discovered SV
+* **2020-08** Delivery of report and results  
+
+
+# Practical information
+
+## Data responsibilities
+Unfortunately, NBIS does not have resources to keep any files associated with
+the support request; we kindly suggest that you safely store the results
+delivered by us. In addition, we kindly ask that you remove the files from
+UPPMAX/UPPNEX. The main storage at UPPNEX is optimized for high-speed and
+parallel access, which makes it expensive and not the right place for long-term
+archiving. Please be considerate of your fellow researchers by not taking up
+this expensive space.
+
+The responsibility for data archiving lies with universities and we recommend
+asking your local IT for support with long-term data storage. The
+[Data Center](https://www.scilifelab.se/data/) at SciLifeLab may also be
+of help with discussing other options.
+
+Please note that special considerations may apply to human-derived, sensitive
+personal data. This should be handled according to specific laws and
+regulations as outlined at the [NBIS website](`r link_sensitive_data`).
+
+## Acknowledgements
+If you are presenting the results in a paper, at a workshop or at a conference,
+we kindly remind you to acknowledge us according to the signed
+[NBIS User Agreement](`r link_agreement`):
+
+[NBIS staff should be included as co-authors](`r params$staff_web`) if the
+support work leads to a publication and when this is merited in accordance to
+the ethical recommendations for authorship, *i.e.* the [ICMJE
+recommendations](`r link_authorship`). If applicable, please include
+*`r params$staff_name`, `r affil`* as co-author. If the above is not
+applicable, please acknowledge NBIS like so: *Support by NBIS (National
+Bioinformatics Infrastructure Sweden) is gratefully acknowledged.*
+
+In addition, Uppmax kindly asks you to [acknowledge UPPMAX and
+SNIC](`r link_uppmax`). If applicable, please add: *The computations were
+performed on resources provided by SNIC through Uppsala Multidisciplinary
+Center for Advanced Computational Science (UPPMAX) under Project
+`r params$uppmax_project`.*
+
+In any and all publications based on data from NGI Sweden, the authors
+must [acknowledge SciLifeLab, NGI and Uppmax](`r link_acknowledge`), like so:
+*The authors would like to acknowledge support from Science for Life
+Laboratory, the National Genomics Infrastructure, NGI, and Uppmax for providing
+assistance in massive parallel sequencing and computational infrastructure.*
+
+## Closing procedures
+You should soon be contacted by one of our managers, Jessica Lindvall
+*(jessica.lindvall@nbis.se)* or Henrik Lantz
+*(henrik.lantz@nbis.se)*, with a request to close down the project in our
+internal system and for invoicing matters. If we do not hear from you within
+**30 days** the project will be automatically closed and invoice sent.
+Again, we would like to remind you about data responsibility and
+acknowledgements, see the sections on data responsibilities and
+acknowledgments.
+
+You are naturally more than welcome to come back to us with further data
+analysis request at any time via [the support form](`r link_support`). Thank
+you for using NBIS, we wish you the best of luck with your future research!
+\newpage  
+
+# Summary
+_DSG2_ is knocked out by CRISPR in HAP1 cells. This cell-line is known as haplpid cells; chr8 and 15 seem to have two copies. There are three samples:  
+- WT: wild type without any modification  
+- F9: KO DSG2   
+- H11: KO DSG2  
+Virus can infect both WT and H11 while F9 is resistant. Two different antibodies are used to detect expression of DSG2 protein in these samples. Figure \ref{fig:antibody_test} top panel shows detection of DSG2 protein using a antibody targeting domain 1 and 2 and lower panel by using a antibody targeting domain 3 and 4.    
+```{r antibody_test, echo = F, fig.cap = 'FACS sorting targeting domain 1 and 2 (top) and 3 and 4 (lower) panel.', out.width = "120%"}
+include_graphics("../../results/Antibody_test.pdf")
+```
+
+\newpage
+To characterise the genetic difference between these samples whole-genome sequencing (WGS) was conducted. In this report we describe the analysis to identify genetic differentiation between samples which may be associated with response to infection. The initial variant calling was carried out by NGI based on GATK best practice. The WT sample did not have any calls as homozygous reference (0/0). Thus, we repeated the pipeline and compared the samples for small variants (SNP and INDEL). We also screened for structural variation (SV) and compared the samples. 
+
+
+# Deliverables
+\label{deliverables}
+\begin{itemize}
+  \item \textbf{Variant\_stat:} Figures of variant calling statistics distribution.   
+  \item \textbf{VCF:} Final VCF of small variants by GATK and annotated for functional mutations by snpEff.    
+  \item \textbf{Freq:} A text file that reference allele frequency is calculated in all of the samples.       
+  \item \textbf{VCF:} Final VCF of structural variants by Manta and annotated for functional mutations.  
+  \item \textbf{Depth:} A text file consisting of raw depth of DSG2 region on chr18.  
+  \item \textbf{snpEff:} General statistics of functional annotation generated by snpEff.
+  \item \textbf{Codes:} All the codes and part of results used in the report are located in github repository of \href{https://github.com/NBISweden/SMS_4947_20_CVA24v_receptor.git}{NBISweden}. A copy of this repository is alos located on Uppmax:  
+  
+  \item \textbf{NBIS Report:} This report.  
+\end{itemize}
+All the files are stored in _/crex/proj/snic2020-16-70/private/SMS_4947_20_CVA24v_receptor/results/_.
+\newpage
+# Data analysis  
+We used the alignments that was generated in pipeline used by NGI. Steps in this pipeline is as follows:  
+- FASTQC: Checking the quality of raw reads by FASTQC [@Andrews].   
+- Alignment: Aligning the reads by BWA [@Li2010] on human reference genome (GRCh37/hg19).  
+- QC: Checking the quality of alignments by QualiMap [@Okonechnikov2016].  
+- Variant calling: Due to abovesaid reasons we repeated the variant calling by GATK [@McKenna2010].  
+
+
+
+## QC  
+We checked the quality of mapping for each sample by QualiMap [@Okonechnikov2016]. Above 99% of reads were mapped to the genome. The average coverage across the genome was fairly variable among the samples (Table \ref{table:coverage}) but high enough to call variants.  
+\begin{table}[ht]
+  \caption{Mean coverage across the genome calculated by QualiMap.}
+    \begin{center}
+    \begin{tabular}{ll}
+    \hline
+    \bf Sample & \bf Mean Coverage \\ 
+    \hline
+    F9  &  40.81  \\
+    H11 & 56.20 \\
+    WT  & 38.51 \\ 
+    \hline
+    \end{tabular}
+    \end{center}
+    \label{table:coverage}
+\end{table}    
+
+## Variant calling  
+
+### Small variant (SNP/INDEL)  
+For variant calling we followed GATK best practice (GATK4, version 4.1.1.0) [@McKenna2010]. We generated g.vcf files for each sample by GATK::HaplotypeCaller and genotyped the samples GATK::GenotypteGVCFs. To filter out low quality variants we extracted following statistics from vcf file for SNPs and INDELs separately and set a cutoff based on distributions of them. All the figures related to these statistics are located in _results/Variant_calling/Genotyping/*pdf_. Statistics and cut-off values for SNPs and INDELs are:   
+
+**INDEL**  
+- QUAL < 100.0   
+- QD < 10.0   
+- FS > 10.0   
+- ReadPosRankSum < -2.0  
+- MQRankSum  < -2.0  
+- BaseQRankSum < -5.0  
+- SOR > 3.0   
+- genotype-filter  DP < 10.0 || DP >200.0   
+
+**SNP**  
+- QUAL < 100.0  
+- QD < 10.0   
+- FS > 10.0   
+- MQ < 40.0   
+- MQRankSum  < -8.0  
+- ReadPosRankSum < -5.0   
+- BaseQRankSum < -5.0   
+- SOR > 3.0    
+- genotype-filter  DP < 10.0 || DP >400.0   
+
+\newpage
+After filtering, we merged both vcf files (SNPs and INDELs) and kept only variants passed filtering.  This resulted in **3,289,925** SNP/INDEL (Table \ref{table:small_variant_freq}):  
+\begin{table}[]
+  \caption{Frequency of small variants across the genome.}
+    \begin{center}
+    \begin{tabular}{ll}
+    \bf Variants & \bf Frequency \\ \hline
+    SNP  &  2,643,008  \\
+    INDEL & 646,917 \\ \hline
+    \end{tabular}
+    \end{center}
+    \label{table:small_variant_freq}
+\end{table}    
+
+We calculated reference allele frequency of each variant for each individual to identify differentiated sites between samples. The allele frequency distribution suggestes that all samples have very similar profile (Figure \ref{fig:Ref_Allele_Freq}).  
+```{r Ref_Allele_Freq, echo = F, fig.align="center", fig.cap='Reference allele frequency distribution across the genome. The inset figure shows full frequency spectrum (0-1).', out.width = "80%"}
+include_graphics("../../results/Final_Call-PASS_snpEff_freq_distribution.pdf")
+```
+
+### Functional effect prediction  
+We used snpEff [@cingolani2012program] and GRCh37.p13.RefSeq annotation to annotate the effect of identified variants on genes. Table \ref{table:snpEff_table} shows number of identified variants in different functional elements. Identified variants are mostly in non-coding regions (intergenic_region or intronic_region). Effect prediction details is found [here](https://pcingola.github.io/SnpEff/SnpEff_manual.html#input).     
+\begin{table}[ht]
+\centering
+\begin{tabular}{rlrl}
+  \hline
+ & Type & Count & Percent \\ 
+  \hline
+1 & 3\_prime\_UTR\_variant & 21 430 & 0.58\% \\ 
+  2 & 5\_prime\_UTR\_premature\_start\_codon\_gain\_variant & 459 & 0.01\% \\ 
+  3 & 5\_prime\_UTR\_variant & 3 752 & 0.10\% \\ 
+  4 & bidirectional\_gene\_fusion & 1 & 0.00\% \\ 
+  5 & conservative\_inframe\_deletion & 45 & 0.00\% \\ 
+  6 & conservative\_inframe\_insertion & 64 & 0.00\% \\ 
+  7 & disruptive\_inframe\_deletion & 126 & 0.00\% \\ 
+  8 & disruptive\_inframe\_insertion & 84 & 0.00\% \\ 
+  9 & downstream\_gene\_variant & 181 580 & 4.90\% \\ 
+  10 & frameshift\_variant & 355 & 0.01\% \\ 
+  11 & gene\_fusion & 3 & 0.00\% \\ 
+  12 & initiator\_codon\_variant & 1 & 0.00\% \\ 
+  13 & intergenic\_region & 1 852 514 & 49.95\% \\ 
+  14 & intragenic\_variant & 124 757 & 3.36\% \\ 
+  15 & intron\_variant & 1 308 566 & 35.29\% \\ 
+  16 & missense\_variant & 8 438 & 0.23\% \\ 
+  17 & non\_coding\_transcript\_exon\_variant & 14 784 & 0.40\% \\ 
+  18 & non\_coding\_transcript\_variant & 14 & 0.00\% \\ 
+  19 & splice\_acceptor\_variant & 87 & 0.00\% \\ 
+  20 & splice\_donor\_variant & 65 & 0.00\% \\ 
+  21 & splice\_region\_variant & 2 636 & 0.07\% \\ 
+  22 & start\_lost & 20 & 0.00\% \\ 
+  23 & stop\_gained & 85 & 0.00\% \\ 
+  24 & stop\_lost & 43 & 0.00\% \\ 
+  25 & stop\_retained\_variant & 12 & 0.00\% \\ 
+  26 & synonymous\_variant & 8 555 & 0.23\% \\ 
+  27 & upstream\_gene\_variant & 179 996 & 4.85\% \\ 
+   \hline
+\end{tabular}
+\caption{Functional annotation of identified variants.} 
+\label{table:snpEff_table}
+\end{table}
+```{r snpEff_table, echo = F, eval = F}
+library(xtable)
+library(kableExtra)
+path <- '~/Dropbox/NBIS/Projects/SMS_4947_20_CVA24v_receptor/intermediate/Variant_Calling/Genotyping/'
+##Load summary output of snpEff
+snpEff_summary <- read.csv(paste0(path,'Final_Call-PASS_snpEff_count_effects.txt'), sep = '\t', header =T)
+#print.xtable(snpEff_summary, label="tab:tab1", caption = 'Frequency of identified variants in functional elements across teh genome.', comment = F)
+print(xtable(snpEff_summary, display = c("s","f","f", "f"), digits = 0 , caption = 'Functional annotation of identified variants.', label = 'table:snpEff_table'), format.args = list(big.mark = " ", decimal.mark = "."))
+```
+
+\newpage
+In _DSG2_ region there are 10 variants that listed in Table \ref{table:DSG2_snpEff_AF}. Most of the variants are in intronic region but there are two frameshift mutations (exon 3 and 8) as well as a disruptive_inframe deletion (exon 5).  
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrrrll}
+  \hline
+ & Chr & Position & F9 & H11 & WT & Effect & Gene \\ 
+  \hline
+ 1 & 18 & 29 086 973 & 0.00 & 0.00 & 0.00 & intron\_variant & DSG2 \\ 
+ 2 & 18 & 29 087 112 & 0.00 & 0.00 & 0.00 & intron\_variant & DSG2 \\ 
+ 3 & 18 & 29 089 395 & 0.00 & 0.00 & 0.00 & intron\_variant & DSG2 \\ 
+ 4 & 18 & 29 098 215 & 1.00 & 0.07 & 1.00 & conservative\_inframe\_deletion & DSG2 \\ 
+ 5 & 18 & 29 098 226 & 1.00 & 0.17 & 1.00 & splice\_donor\_variant & DSG2  \\ 
+ 5 & 18 & 29 098 226 & 1.00 & 0.17 & 1.00 & conservative\_inframe\_deletion & DSG2 \\ 
+ 5 & 18 & 29 098 226 & 1.00 & 0.17 & 1.00 & splice\_region\_variant & DSG2 \\
+ 5 & 18 & 29 098 226 & 1.00 & 0.17 & 1.00 & intron\_variant & DSG2 \\ 
+ 6 & 18 & 29 099 844 & 0.00 & 0.40 & 1.00 & frameshift\_variant & DSG2 \\ 
+ 7 & 18 & 29 101 063 & 0.65 & 1.00 & 1.00 & disruptive\_inframe\_deletion & DSG2 \\ 
+ 8 & 18 & 29 104 820 & 1.00 & 0.44 & 1.00 & frameshift\_variant & DSG2 \\ 
+ 9 & 18 & 29 107 035 & 0.00 & 0.00 & 0.00 & intron\_variant & DSG2 \\ 
+ 10 & 18 & 29 132 175 & 0.00 & 0.00 & 0.00 & downstream\_gene\_variant:intron\_variant & DSG2:LOC100652770 \\ 
+   \hline
+\end{tabular}
+\caption{Identified mutations in DSG2 region and their functional impact. Values in columns F9, H11, and WT shows reference allele frequency} 
+\label{table:DSG2_snpEff_AF}
+\end{table}
+
+\newpage
+## Large variant (Structural variant)
+We screened _DSG2_ region for structural variantion by Manta [@Chen2016] for F9 and H11 samples.  Similar to small variants we annotated identified variants by snpEff for functional changes on _DSG2_ gene. This resulted in:
+
+-   F9: A deletion (~3 kb) chr18:29098216-29100979.  This mutation completely remove exon 3 and 4 as well as part of exon 2.  This deletion is not fixed in this sample (Figure \ref{fig:DSG2_summary})
+-  H11: 
+      i) An inversion (~2 kb) chr18:29098216-29099847. This inversion spans part of exon 2 and exon 3 and intronic region in between (Figure \ref{fig:DSG2_summary}).
+      ii) An insertion (225 bp) chr18:29104826. This mutation results in a stop_gain & disruptive_inframe_insertion on exon 8.  The inserted sequence has high similarity to (MT270142.1)[https://www.ncbi.nlm.nih.gov/nucleotide/MT270142.1?report=genbank&log$=nuclalign&blast_rank=1&RID=KACJF7YS014] which is a cloning vector PAPs-CRISPR.  
+
+
+```{r DSG2_summary, echo = F, fig.align="center", fig.cap = "Summary of the identified variants. 1) gene model 2) reference allele frequency 3) normalised depth 4) inversion; inversion is shown by red arrow. 225 bp insertion was small to visualise here.", out.width = "100%"}
+include_graphics("../../results/Summarised_DSG2.pdf")
+```
+
+\newpage
+# Concluding remarks
+
+Results suggest that some of the identified variants have "HIGH" impact on functionality of _DSG2_. For instance deletion spanning exons in F9 and in particular inversion in H11 which introduces a stop codon. Identified small variants were mostly in intronic region as well as few frameshifts in coding regions. All in all, CRISPR has introduced different mutations in different samples which may be associated with different responses to infection. To explore this further we suggested additional experiments:  
+ 
+- Designing primers at breakpoints of identified inversion in H11 as well as deletion in F9 as discussed in the meeting on 4th of June.  
+- Designing primers to amplify cDNA.  
+
+The following figures show suggested PCR experiments in more details.  
+
+```{r Experiments, echo = F, fig.align="center", fig.cap = "Suggested experiments discussed in the meeting.", out.width = "100%"}
+include_graphics("../../results/Experiments1.pdf")
+include_graphics("../../results/Experiments2.pdf")
+include_graphics("../../results/Experiments3.pdf")
+```
+\newpage
+It is also possible to look into other variants by allele frequency. Considering that you have a pool of  cells in each sample, allele frequency will be a more accurate measure than genotypes. Thus, I filtered by reference allele frequency:    
+- F9 Ref freq <=0.2 while H11 & WT has ref freq >=0.8   
+- F9 Ref freq >=0.8 while H11 & WT has ref freq <=0.2   
+Figure \ref{fig:differentiated_sites} shows the distribution of these sites.  
+
+```{r differentiated_sites, echo = F, fig.align="center", fig.cap = "Suggested experiments discussed in the meeting.", out.width = "100%"}
+include_graphics("../../results/Final_Call-PASS_snpEff_differentiated_variants_chr_distribution.pdf")
+``` 
+
+There are 0.15% (~5000 SNP/INDEL) of total identified sites showing frequency difference between F9 and H11/WT. You can find list of these sites with allele frequency and their functional changes in _results/Variant_results/Variant_calling/Genotyping/Differentiated_sites_F9_H11_WT-snpEff.txt_.  As an example there is  a missense mutation (11:6588171) in _DNHD1_ where reference allele frequency is *0* in F9 while H11 and WT have frequency of *1*.   Or another missense mutation (19:9070194) in _MUC16_ where F9 has frequency of *1* while H11 and WT has frequency of *0*.  
+
+
+Identified mutations can be correlated with exon maps \ref{fig:exon_map} (from [@Excoffon2014]) and anti body binding sites.  
+```{r exon_map, echo = F, fig.align="center", fig.cap = "Exon map of DSG2 from Excoffon et al., 2014.", out.width = "100%"}
+include_graphics("../../results/Exon_map.jpg")
+``` 
+
+\newpage
+
+# Reference
